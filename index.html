@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Guess Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+
+    <h1>🎯 Guess The Number</h1>
+
+    <!-- Difficulty Selection -->
+    <div id="difficulty">
+        <p>Select Difficulty</p>
+        <button onclick="startGame('easy')">EASY (1–50)</button>
+        <button onclick="startGame('medium')">MEDIUM (1–75)</button>
+        <button onclick="startGame('hard')">HARD (1–100, 5 tries)</button>
+    </div>
+
+    <!-- Game Area -->
+    <div id="game" style="display:none;">
+        <p id="rangeText"></p>
+
+        <input type="number" id="guessInput" placeholder="Enter your guess">
+
+        <button onclick="checkGuess()">GUESS</button>
+
+        <p id="result"></p>
+        <p id="attempts"></p>
+
+        <button class="restart" onclick="restartGame()">Restart</button>
+    </div>
+
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
