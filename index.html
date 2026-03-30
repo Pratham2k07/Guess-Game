@@ -2,39 +2,55 @@
 <html>
 <head>
     <title>Guess Game</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="container">
+<div class="layout">
 
-    <h1>🎯 Guess The Number</h1>
-
-    <!-- Difficulty Selection -->
-    <div id="difficulty">
-        <p>Select Difficulty</p>
-        <button onclick="startGame('easy')">EASY (1–50)</button>
-        <button onclick="startGame('medium')">MEDIUM (1–75)</button>
-        <button onclick="startGame('hard')">HARD (1–100, 5 tries)</button>
+    <div class="sidebar">
+        <h2>🏆 Leaderboard</h2>
+        <div id="leaderboard"></div>
     </div>
 
-    <!-- Game Area -->
-    <div id="game" style="display:none;">
-        <p id="rangeText"></p>
+    <div class="main">
 
-        <input type="number" id="guessInput" placeholder="Enter your guess">
+        <div id="menu" class="card">
+            <h1>🎯 Guess The Number</h1>
 
-        <button onclick="checkGuess()">GUESS</button>
+            <input type="number" id="numPlayers" placeholder="Enter number of players">
+            <button onclick="createPlayerInputs()">Next</button>
 
-        <p id="result"></p>
-        <p id="attempts"></p>
+            <div id="playerInputs"></div>
 
-        <button class="restart" onclick="restartGame()">Restart</button>
+            <p>Select Difficulty</p>
+            <button onclick="startGame(1)">EASY</button>
+            <button onclick="startGame(2)">MEDIUM</button>
+            <button onclick="startGame(3)">HARD</button>
+        </div>
+
+        <div id="game" class="card hidden">
+            <h2 id="playerTurn"></h2>
+            <p>⏱ Time Left: <span id="timer"></span>s</p>
+
+            <input type="number" id="guess" placeholder="Enter your guess">
+            <button onclick="makeGuess()">Guess</button>
+
+            <p id="hint"></p>
+        </div>
+
+        <div id="endScreen" class="card hidden">
+            <h2 id="winnerText"></h2>
+            <div id="finalLeaderboard"></div>
+            <button id="homeBtn" class="hidden" onclick="goHome()">Return to Home</button>
+        </div>
+
     </div>
-
 </div>
 
-<script src="script.js"></script>
+<audio id="alertSound" src="meme.mpeg"></audio>
 
+<script src="script.js"></script>
 </body>
 </html>

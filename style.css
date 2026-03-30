@@ -1,77 +1,74 @@
 body {
     margin: 0;
-    font-family: Arial, sans-serif;
+    font-family: Arial;
+    background: #0b3c6f;
+    color: white;
+}
 
-    background: linear-gradient(135deg, #000428, #004e92);
-
+.layout {
     display: flex;
-    justify-content: center;
-    align-items: center;
     height: 100vh;
 }
 
-/* Container */
-.container {
-    background: rgba(0, 0, 0, 0.75);
+.sidebar {
+    width: 25%;
+    background: #021a33;
+    padding: 20px;
+}
+
+.main {
+    width: 75%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.card {
+    background: #021a33;
     padding: 30px;
-    border-radius: 20px;
+    border-radius: 15px;
+    width: 80%;
+    max-width: 500px;
     text-align: center;
-    width: 320px;
-
-    color: white;
-
-    box-shadow: 0 0 25px #00f2ff;
 }
 
-/* Buttons */
-button {
-    display: block;
-    width: 100%;
-    margin: 10px 0;
-    padding: 12px;
-    border: none;
-    border-radius: 10px;
-
-    background: linear-gradient(90deg, #00f2ff, #00ff88);
-    color: black;
-    font-weight: bold;
-
-    cursor: pointer;
-    transition: 0.3s;
-}
-
-button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 15px #00ffcc;
-}
-
-/* Input */
 input {
-    width: 90%;
-    padding: 10px;
+    width: 95%;
+    padding: 12px;
+    margin: 8px 0;
     border-radius: 8px;
     border: none;
-    margin-top: 10px;
-    outline: none;
+    background: white;
+    color: black;
 }
 
-/* Restart Button */
-.restart {
-    background: linear-gradient(90deg, #ff512f, #dd2476);
+button {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(90deg, #00c853, #64dd17);
     color: white;
+    font-weight: bold;
+    cursor: pointer;
 }
 
-.restart:hover {
-    box-shadow: 0 0 15px #ff4b2b;
+.hidden {
+    display: none;
 }
 
-/* Text */
-#result {
-    margin-top: 15px;
-    font-size: 16px;
+#hint {
+    font-size: 1.2rem;
+    color: #00eaff;
 }
 
-#attempts {
-    font-size: 14px;
-    opacity: 0.8;
+#winnerText {
+    color: gold;
+    animation: pop 1s infinite alternate;
+}
+
+@keyframes pop {
+    from { transform: scale(1); }
+    to { transform: scale(1.1); }
 }
