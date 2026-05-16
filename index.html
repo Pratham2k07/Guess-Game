@@ -11,15 +11,17 @@
 <body>
 
 <div class="layout">
-    <div class="sidebar">
+    <div id="sidebar" class="sidebar">
         <div class="sidebar-header">
             <div class="logo">🎯</div>
             <h2>Leaderboard</h2>
+            <button class="btn-close-sidebar" onclick="toggleLeaderboard()">✕</button>
         </div>
         <div id="leaderboard" class="leaderboard-list"></div>
     </div>
 
     <div class="main">
+        <button id="mobileLeaderboardBtn" class="mobile-toggle" onclick="toggleLeaderboard()" title="Show Leaderboard">📊</button>
         <div class="screens-container">
             <!-- Start Screen -->
             <div id="startScreen" class="screen card">

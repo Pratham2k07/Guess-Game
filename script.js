@@ -281,3 +281,8 @@ function copyShareLink() {
         console.error("Could not copy text: ", err);
     });
 }
+
+function toggleLeaderboard() {
+    const sidebar = document.getElementById("sidebar");
+    sidebar.classList.toggle("open");
+}
