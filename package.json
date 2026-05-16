@@ -1,0 +1,26 @@
+{
+  "name": "guess-game",
+  "version": "1.0.0",
+  "description": "A web-based implementation of a classic number guessing game, featuring difficulty levels, attempt tracking, and real-time feedback. The project demonstrates logic translation from C programming to an interactive frontend application using JavaScript.",
+  "main": "script.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Pratham2k07/Guess-Game.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Pratham2k07/Guess-Game/issues"
+  },
+  "homepage": "https://github.com/Pratham2k07/Guess-Game#readme",
+  "dependencies": {
+    "express": "^5.2.1",
+    "socket.io": "^4.8.3"
+  }
+}

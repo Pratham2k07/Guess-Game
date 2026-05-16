@@ -1,219 +1,283 @@
+const socket = io();
+
+let currentUsername = "";
+let currentRoomCode = "";
+let isHost = false;
 let players = [];
-let scores = [];
-let currentPlayer = 0;
+let gd = null; // Game data
 
-let number, maxAttempts, timeLimit;
-let attempts = 0;
-let timerInterval;
-let isBreak = false;
+// UI Elements
+const startScreen = document.getElementById("startScreen");
+const lobbyScreen = document.getElementById("lobbyScreen");
+const gameScreen = document.getElementById("gameScreen");
+const endScreen = document.getElementById("endScreen");
 
-/* CREATE INPUTS */
-function createPlayerInputs() {
-    let n = document.getElementById("numPlayers").value;
-    let container = document.getElementById("playerInputs");
-    container.innerHTML = "";
-
-    for (let i = 0; i < n; i++) {
-        container.innerHTML += `<input type="text" class="pname" placeholder="Player ${i+1}">`;
+function getUsername() {
+    const val = document.getElementById("username").value.trim();
+    if (!val) {
+        showError("Please enter a username");
+        return null;
     }
+    return val;
 }
 
-/* START GAME */
-function startGame(difficulty) {
-    let inputs = document.getElementsByClassName("pname");
-
-    players = [];
-    scores = [];
-    currentPlayer = 0;
-
-    for (let i = 0; i < inputs.length; i++) {
-        players.push(inputs[i].value || "Player " + (i+1));
-        scores.push(0);
-    }
-
-    if (difficulty == 1) {
-        maxAttempts = 1000;
-        timeLimit = 60;
-    } else if (difficulty == 2) {
-        maxAttempts = 1000;
-        timeLimit = 45;
-    } else {
-        maxAttempts = 5;
-        timeLimit = 30;
-    }
-
-    window.range = (difficulty == 1) ? 50 : (difficulty == 2) ? 75 : 100;
-
-    document.getElementById("menu").classList.add("hidden");
-    document.getElementById("game").classList.remove("hidden");
-
-    nextTurn();
+function showError(msg) {
+    const err = document.getElementById("startError");
+    err.innerText = msg;
+    err.classList.remove("hidden");
+    setTimeout(() => err.classList.add("hidden"), 3000);
 }
 
-/* TURN */
-function nextTurn() {
-    if (currentPlayer >= players.length) {
-        endGame();
+function createRoom() {
+    const user = getUsername();
+    if (!user) return;
+    currentUsername = user;
+
+    socket.emit("createRoom", { username: user }, (res) => {
+        if (res.success) {
+            isHost = true;
+            currentRoomCode = res.roomCode;
+            players = res.players;
+            showLobby();
+        } else {
+            showError(res.message);
+        }
+    });
+}
+
+function joinRoom() {
+    const user = getUsername();
+    if (!user) return;
+    const code = document.getElementById("joinRoomCode").value.trim();
+    if (!code) {
+        showError("Please enter a room code");
         return;
     }
+    currentUsername = user;
 
-    // 🔥 IMPORTANT FIX: NEW NUMBER EVERY PLAYER
-    number = Math.floor(Math.random() * window.range) + 1;
-
-    attempts = 0;
-    let timeLeft = timeLimit;
-    isBreak = false;
-
-    document.getElementById("playerTurn").innerText =
-        players[currentPlayer] + "'s Turn";
-
-    document.getElementById("hint").innerText =
-        `Guess between 1 and ${window.range}`;
-
-    updateLeaderboard();
-
-    clearInterval(timerInterval);
-    timerInterval = setInterval(() => {
-        document.getElementById("timer").innerText = timeLeft;
-        timeLeft--;
-
-        if (timeLeft < 0) {
-            clearInterval(timerInterval);
-            playSound();
-            currentPlayer++;
-            handleNext();
+    socket.emit("joinRoom", { roomCode: code, username: user }, (res) => {
+        if (res.success) {
+            isHost = false;
+            currentRoomCode = res.roomCode;
+            players = res.players;
+            showLobby();
+        } else {
+            showError(res.message);
         }
-    }, 1000);
-
-    setTimeout(()=>document.getElementById("guess").focus(),100);
+    });
 }
 
-/* BREAK */
-function breakTime(nextPlayer) {
-    isBreak = true;
+function showLobby() {
+    startScreen.classList.add("hidden");
+    lobbyScreen.classList.remove("hidden");
+    document.getElementById("roomCodeDisplay").innerText = currentRoomCode;
+    updateLobbyPlayers();
 
-    let t = 5;
-    document.getElementById("playerTurn").innerText =
-        `Next: ${players[nextPlayer]}`;
-
-    document.getElementById("hint").innerText = `Starting in ${t}`;
-
-    let interval = setInterval(() => {
-        t--;
-        document.getElementById("hint").innerText = `Starting in ${t}`;
-
-        if (t <= 0) {
-            clearInterval(interval);
-            nextTurn();
-        }
-    }, 1000);
-}
-
-function handleNext() {
-    if (currentPlayer < players.length) {
-        breakTime(currentPlayer);
+    if (isHost) {
+        document.getElementById("hostControls").classList.remove("hidden");
+        document.getElementById("waitingMessage").classList.add("hidden");
     } else {
-        endGame();
+        document.getElementById("hostControls").classList.add("hidden");
+        document.getElementById("waitingMessage").classList.remove("hidden");
     }
 }
 
-/* GUESS */
-function makeGuess() {
-    if (isBreak) return;
-
-    let input = document.getElementById("guess");
-    let guess = input.value;
-
-    if (guess === "") return;
-
-    attempts++;
-
-    if (guess == number) {
-        clearInterval(timerInterval);
-        scores[currentPlayer] += 100 - attempts*10;
-        currentPlayer++;
-        handleNext();
-    } 
-    else if (guess < number) {
-        document.getElementById("hint").innerText = "Too low!";
-    } 
-    else {
-        document.getElementById("hint").innerText = "Too high!";
-    }
-
-    if (attempts >= maxAttempts && maxAttempts === 5) {
-        clearInterval(timerInterval);
-        playSound();
-        currentPlayer++;
-        handleNext();
-    }
-
-    input.value = "";
+function updateLobbyPlayers() {
+    const container = document.getElementById("lobbyPlayers");
+    container.innerHTML = "";
+    players.forEach(p => {
+        const pill = document.createElement("div");
+        pill.className = "player-pill";
+        pill.innerHTML = `👤 ${p.name}`;
+        if (p.name === currentUsername) {
+            pill.style.borderColor = "var(--primary)";
+            pill.style.color = "var(--primary)";
+        }
+        container.appendChild(pill);
+    });
     updateLeaderboard();
 }
 
-/* END GAME */
-function endGame() {
-    document.getElementById("game").classList.add("hidden");
-    document.getElementById("endScreen").classList.remove("hidden");
+function startGame(diff) {
+    if (isHost) {
+        socket.emit("startGame", { difficulty: diff });
+    }
+}
 
-    let arr = players.map((p,i)=>({name:p,score:scores[i]}));
-    arr.sort((a,b)=>b.score-a.score);
+// Socket Events
+socket.on("playerJoined", (newPlayers) => {
+    players = newPlayers;
+    updateLobbyPlayers();
+});
 
-    document.getElementById("winnerText").innerText =
-        "🏆 Winner: " + arr[0].name;
+socket.on("gameStarted", (data) => {
+    lobbyScreen.classList.add("hidden");
+    gameScreen.classList.remove("hidden");
+    document.getElementById("guessHistory").innerHTML = "";
+    gd = data;
+});
 
-    let html="";
-    arr.forEach((p,i)=>{
+socket.on("turnUpdate", (data) => {
+    document.getElementById("playerTurn").innerText = `${data.username}'s Turn`;
+    document.getElementById("hint").innerText = `Guess between 1 and ${gd.range}`;
+    document.getElementById("timer").innerText = data.timeLeft;
+    
+    const isMyTurn = data.username === currentUsername;
+    document.getElementById("guess").disabled = !isMyTurn;
+    document.getElementById("guessBtn").disabled = !isMyTurn;
+    
+    if (isMyTurn) {
+        document.getElementById("guess").focus();
+    }
+});
+
+socket.on("timerUpdate", (timeLeft) => {
+    document.getElementById("timer").innerText = timeLeft;
+});
+
+socket.on("breakTime", (data) => {
+    document.getElementById("playerTurn").innerText = `Next: ${data.nextPlayer}`;
+    document.getElementById("hint").innerText = `Starting in ${data.time}`;
+    document.getElementById("timer").innerText = "-";
+});
+
+socket.on("guessResult", (data) => {
+    players = data.players;
+    updateLeaderboard();
+    
+    const history = document.getElementById("guessHistory");
+    const item = document.createElement("div");
+    item.className = "history-item";
+    
+    let resultMsg = "";
+    if (data.result === "correct") {
+        resultMsg = "guessed correctly! 🎉";
+        if (data.username === currentUsername) playSound();
+        addShakeEffect(document.getElementById("playerTurn"), false); // Success effect
+    } else if (data.result === "too_high") {
+        resultMsg = "guessed too high.";
+        if (data.username === currentUsername) addShakeEffect(document.getElementById("guess"), true);
+    } else if (data.result === "too_low") {
+        resultMsg = "guessed too low.";
+        if (data.username === currentUsername) addShakeEffect(document.getElementById("guess"), true);
+    } else if (data.result === "out_of_attempts") {
+        resultMsg = "ran out of attempts!";
+        if (data.username === currentUsername) playSound();
+    }
+
+    item.innerHTML = `<strong>${data.username}</strong> guessed <b>${data.guess}</b> - ${resultMsg}`;
+    history.prepend(item);
+    
+    document.getElementById("hint").innerText = resultMsg;
+});
+
+socket.on("turnTimeout", (data) => {
+    const history = document.getElementById("guessHistory");
+    const item = document.createElement("div");
+    item.className = "history-item";
+    item.innerHTML = `<strong>${data.username}</strong> ran out of time!`;
+    history.prepend(item);
+    if (data.username === currentUsername) playSound();
+});
+
+socket.on("gameOver", (data) => {
+    gameScreen.classList.add("hidden");
+    endScreen.classList.remove("hidden");
+    players = data.players;
+    players.sort((a,b) => b.score - a.score);
+    
+    document.getElementById("winnerText").innerText = "🏆 Winner: " + (players[0]?.name || "Nobody");
+    
+    let html = "";
+    players.forEach((p, i) => {
         html += `<p>${i+1}. ${p.name} - ${p.score}</p>`;
     });
-
     document.getElementById("finalLeaderboard").innerHTML = html;
+});
 
-    setTimeout(()=>{
-        document.getElementById("homeBtn").classList.remove("hidden");
-    },5000);
+// Helpers
+function makeGuess() {
+    const input = document.getElementById("guess");
+    const guess = input.value.trim();
+    if (guess !== "") {
+        socket.emit("makeGuess", guess);
+        input.value = "";
+    }
+}
+
+function updateLeaderboard() {
+    let html = "";
+    players.forEach(p => {
+        html += `<div class="player-score ${p.name === currentUsername ? 'active' : ''}">
+            <span>${p.name}</span>
+            <span>${p.score}</span>
+        </div>`;
+    });
+    document.getElementById("leaderboard").innerHTML = html;
+}
+
+function playSound() {
+    const s = document.getElementById("alertSound");
+    s.currentTime = 0;
+    s.play().catch(()=>{});
 }
 
 function goHome() {
     location.reload();
 }
 
-function updateLeaderboard() {
-    let html="";
-    for (let i=0;i<players.length;i++) {
-        html += `<p>${players[i]} : ${scores[i]}</p>`;
-    }
-    document.getElementById("leaderboard").innerHTML = html;
+function addShakeEffect(element, isError) {
+    element.animate([
+        { transform: 'translateX(0)' },
+        { transform: 'translateX(-10px)' },
+        { transform: 'translateX(10px)' },
+        { transform: 'translateX(-10px)' },
+        { transform: 'translateX(10px)' },
+        { transform: 'translateX(0)' }
+    ], {
+        duration: 400,
+        iterations: 1
+    });
 }
 
-function playSound() {
-    let s=document.getElementById("alertSound");
-    s.currentTime=0;
-    s.play().catch(()=>{});
-}
-
-/* ENTER NAV */
-document.addEventListener("keydown", function(e) {
-    if (e.key !== "Enter" || isBreak) return;
-
-    let active = document.activeElement;
-
-    if (active.id === "numPlayers") {
-        createPlayerInputs();
-        setTimeout(()=>document.querySelector(".pname")?.focus(),100);
-    }
-    else if (active.classList.contains("pname")) {
-        let inputs = Array.from(document.getElementsByClassName("pname"));
-        let index = inputs.indexOf(active);
-
-        if (index < inputs.length - 1) {
-            inputs[index + 1].focus();
-        } else {
-            document.querySelector("button[onclick='startGame(1)']").focus();
+// Enter Key Support
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+        const active = document.activeElement;
+        if (active.id === "guess") {
+            makeGuess();
+        } else if (active.id === "username" || active.id === "joinRoomCode") {
+            const code = document.getElementById("joinRoomCode").value.trim();
+            if (code) {
+                joinRoom();
+            } else {
+                createRoom();
+            }
         }
     }
-    else if (active.id === "guess") {
-        makeGuess();
-    }
 });
+
+// URL Parameter checking for Invite Links
+window.onload = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomFromUrl = urlParams.get('room');
+    if (roomFromUrl) {
+        document.getElementById("joinRoomCode").value = roomFromUrl;
+        document.getElementById("username").focus();
+        
+        // Clean up UI for a streamlined join experience
+        document.getElementById("createRoomBtn").classList.add("hidden");
+        document.getElementById("orDivider").classList.add("hidden");
+        document.getElementById("joinRoomCode").setAttribute("readonly", true);
+    }
+};
+
+function copyShareLink() {
+    // If running locally or on a server, this gets the base URL
+    const link = window.location.origin + window.location.pathname + "?room=" + currentRoomCode;
+    navigator.clipboard.writeText(link).then(() => {
+        alert("Invite link copied to clipboard! Share it with your friends.");
+    }).catch(err => {
+        console.error("Could not copy text: ", err);
+    });
+}
